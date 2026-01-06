@@ -2,8 +2,10 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MOE.Archive.Application.Categories.Services;
+using MOE.Archive.Application.Departments.Services;
 using MOE.Archive.Application.Documents.Services;
 using MOE.Archive.Application.Mappings;
+using MOE.Archive.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,7 +30,8 @@ namespace MOE.Archive.Application.Extensions
 
             // Services
             services.AddScoped<ICategoryService, CategoryService>();
-            services.AddScoped<IDocumentService, DocumentService>();    
+            services.AddScoped<IDocumentService, DocumentService>();
+            services.AddScoped<IDepartmentService, DepartmentService>();
 
             return services;
         }

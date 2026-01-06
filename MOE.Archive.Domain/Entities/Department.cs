@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 
 namespace MOE.Archive.Domain.Entities
 {
-    [Table("Departments")]
     public class Department : BaseEntity
     {
         public int Id { get; set; }
