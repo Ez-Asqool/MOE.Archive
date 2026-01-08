@@ -14,14 +14,18 @@ namespace MOE.Archive.Application.Categories.Validators
         {
             RuleFor(x => x.Name)
                 .NotEmpty().WithMessage("اسم التصنيف مطلوب.")
-                .MaximumLength(150).WithMessage("اسم التصنيف يجب ألا يزيد عن 150 حرفاً.");
+                .MaximumLength(150).WithMessage("اسم التصنيف يجب ألا يتجاوز 150 حرفاً.");
 
             RuleFor(x => x.Description)
-                .MaximumLength(500).WithMessage("الوصف يجب ألا يزيد عن 500 حرف.");
+                .MaximumLength(500).WithMessage("وصف التصنيف يجب ألا يتجاوز 500 حرفاً.");
 
             RuleFor(x => x.ParentCategoryId)
                 .GreaterThan(0).WithMessage("رقم التصنيف الأب غير صحيح.")
                 .When(x => x.ParentCategoryId.HasValue);
+
+            RuleFor(x => x.DepartmentId)
+                .GreaterThan(0).WithMessage("رقم القسم غير صحيح.")
+                .When(x => x.DepartmentId.HasValue);
         }
     }
 }

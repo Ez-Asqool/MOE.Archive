@@ -9,7 +9,7 @@ namespace MOE.Archive.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin,Employee")]
+    [Authorize]
     public class DocumentsController : ControllerBase
     {
         private readonly IDocumentService _documentService;
@@ -23,11 +23,35 @@ namespace MOE.Archive.Api.Controllers
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> Upload([FromForm] UploadDocumentRequestDto request, CancellationToken ct)
         {
-            var userId = GetUserId();
+            // UserId
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+                return Unauthorized();
 
-            var result = await _documentService.UploadAsync(request, userId, ct);
+            var userId = Guid.Parse(userIdClaim.Value);
+
+            // Role
+            var isAdmin = User.IsInRole("Admin");
+
+            // DepartmentId from JWT claim (for Employee/DeptAdmin)
+            int? callerDeptId = null;
+            var deptClaim = User.FindFirst("DepartmentId");
+            if (deptClaim != null && int.TryParse(deptClaim.Value, out var depId))
+                callerDeptId = depId;
+
+            var result = await _documentService.UploadAsync(request, userId, isAdmin, callerDeptId, ct);
             return Ok(result);
         }
+
+        //[HttpPost("upload")]
+        //[Consumes("multipart/form-data")]
+        //public async Task<IActionResult> Upload([FromForm] UploadDocumentRequestDto request, CancellationToken ct)
+        //{
+        //    var userId = GetUserId();
+
+        //    var result = await _documentService.UploadAsync(request, userId, ct);
+        //    return Ok(result);
+        //}
 
         private Guid? GetUserId()
         {

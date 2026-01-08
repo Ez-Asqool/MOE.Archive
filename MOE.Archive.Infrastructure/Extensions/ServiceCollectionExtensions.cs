@@ -4,12 +4,14 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MOE.Archive.Application.Auth.Services;
 using MOE.Archive.Application.Common.Storage;
+using MOE.Archive.Application.UserManagement.Services;
 using MOE.Archive.Domain.Interfaces;
 using MOE.Archive.Infrastructure.Auth;
 using MOE.Archive.Infrastructure.Data;
 using MOE.Archive.Infrastructure.Identity;
 using MOE.Archive.Infrastructure.Repositories;
 using MOE.Archive.Infrastructure.Storage;
+using MOE.Archive.Infrastructure.UserManagement;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -59,6 +61,10 @@ namespace MOE.Archive.Infrastructure.Extensions
 
             // File Storage Service (Local)
             services.AddScoped<IFileStorage, LocalFileStorage>();
+
+
+            // User Management Service  
+            services.AddScoped<IUserManagementService, UserManagementService>();
 
             services.AddScoped<IdentitySeeder>();
             return services;

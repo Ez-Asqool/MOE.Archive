@@ -19,4 +19,8 @@
     <ProjectReference Include="..\MOE.Archive.Domain\MOE.Archive.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Archive\Validators\" />
+  </ItemGroup>
+
 </Project>

@@ -20,7 +20,12 @@ namespace MOE.Archive.Domain.Entities
         public int? ParentCategoryId { get; set; }
         public Category? ParentCategory { get; set; }
 
+        public int? DepartmentId { get; set; }
+        public Department? Department { get; set; }
+
         public bool IsActive { get; set; } = true;
+
+       
 
         public ICollection<Category> Children { get; set; } = new List<Category>();
         public ICollection<Document> Documents { get; set; } = new List<Document>();

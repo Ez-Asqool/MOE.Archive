@@ -27,7 +27,8 @@ namespace MOE.Archive.Infrastructure.Identity
             // 1) Roles
             await EnsureRoleAsync("Admin", "Administrator role with full permissions", cancellationToken);
             await EnsureRoleAsync("Employee", "Standard user role with limited permissions", cancellationToken);
-
+            await EnsureRoleAsync("DeptAdmin", "Department Admin can manage employees and categories within their department", cancellationToken);
+            
             // 2) Admin user
             const string adminEmail = "admin@moe.ps";
             const string adminPassword = "MOEadmin@123*";

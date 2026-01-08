@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MOE.Archive.Application.Archive.Services;
 using MOE.Archive.Application.Categories.Services;
 using MOE.Archive.Application.Departments.Services;
 using MOE.Archive.Application.Documents.Services;
@@ -32,6 +33,7 @@ namespace MOE.Archive.Application.Extensions
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<IDocumentService, DocumentService>();
             services.AddScoped<IDepartmentService, DepartmentService>();
+            services.AddScoped<IArchiveService, ArchiveService>();  
 
             return services;
         }

@@ -10,6 +10,8 @@ namespace MOE.Archive.Application.Documents.Services
 {
     public interface IDocumentService
     {
-        Task<DocumentResponseDto> UploadAsync(UploadDocumentRequestDto request, Guid? currentUserId, CancellationToken ct = default);
+        //Task<DocumentResponseDto> UploadAsync(UploadDocumentRequestDto request, Guid? currentUserId, CancellationToken ct = default);
+
+        Task<DocumentResponseDto> UploadAsync(UploadDocumentRequestDto request,Guid? currentUserId,bool isAdmin,int? callerDepartmentId,CancellationToken ct = default);
     }
 }

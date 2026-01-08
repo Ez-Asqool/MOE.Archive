@@ -11,5 +11,8 @@ namespace MOE.Archive.Application.Categories.DTOs
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public int? ParentCategoryId { get; set; }
+
+        // Admin can set this to create department-specific category
+        public int? DepartmentId { get; set; }
     }
 }

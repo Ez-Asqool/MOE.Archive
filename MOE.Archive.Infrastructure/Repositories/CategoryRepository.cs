@@ -1,4 +1,5 @@
-﻿using MOE.Archive.Domain.Entities;
+﻿using Microsoft.EntityFrameworkCore;
+using MOE.Archive.Domain.Entities;
 using MOE.Archive.Domain.Interfaces;
 using MOE.Archive.Infrastructure.Data;
 using System;
@@ -13,6 +14,23 @@ namespace MOE.Archive.Infrastructure.Repositories
     {
         public CategoryRepository(ApplicationDbContext context) : base(context)
         {
+        }
+
+        public async Task<List<Category>> GetAllWithChildrenAsync(CancellationToken ct)
+        {
+            return await _context.Categories
+                .AsNoTracking()
+                .OrderBy(x => x.Id)
+                .ToListAsync(ct);
+        }
+
+        public async Task<List<Category>> GetAllowedForDepartmentAsync(int departmentId, CancellationToken ct)
+        {
+            return await _context.Categories
+                .AsNoTracking()
+                .Where(c => c.DepartmentId == null || c.DepartmentId == departmentId)
+                .OrderBy(x => x.Id)
+                .ToListAsync(ct);
         }
     }
 }

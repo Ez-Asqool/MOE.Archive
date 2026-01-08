@@ -9,7 +9,8 @@ namespace MOE.Archive.Domain.Enums
     public enum RoleType
     {
         Admin = 1,
-        Employee = 2
+        Employee = 2,
+        DeptAdmin = 3   
     }
 
     public enum OcrStatus

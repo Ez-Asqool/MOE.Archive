@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MOE.Archive.Api.Middleware;
@@ -59,6 +59,11 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy("EmployeeOrAdmin", policy =>
         policy.RequireRole("Employee", "Admin"));
+
+    options.AddPolicy("AdminOrDeptAdmin", policy =>
+        policy.RequireRole("Admin", "DeptAdmin"));
+
+    
 });
 
 var app = builder.Build();

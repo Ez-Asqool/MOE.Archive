@@ -9,14 +9,14 @@ namespace MOE.Archive.Application.Categories.Services
 {
     public interface ICategoryService
     {
-        Task<CategoryResponseDto> GetByIdAsync(int id,  CancellationToken cancellationToken = default);
+        Task<CategoryResponseDto> GetByIdAsync(int id, bool isAdmin, int? callerDepartmentId, CancellationToken cancellationToken = default);
 
-        Task<IEnumerable<CategoryResponseDto>> GetAllAsync(CancellationToken cancellationToken = default);
+        Task<List<CategoryResponseDto>> GetAllAsync(bool isAdmin, int? callerDepartmentId, CancellationToken ct = default);
 
-        Task<CategoryResponseDto> CreateAsync(CreateCategoryRequestDto request, Guid? createdBy, CancellationToken cancellationToken = default);
+        Task<CategoryResponseDto> CreateAsync(CreateCategoryRequestDto request, Guid? createdBy, bool isAdmin, bool isDeptAdmin, int? callerDepartmentId, CancellationToken cancellationToken = default);
 
-        Task<CategoryResponseDto> UpdateAsync(int id, UpdateCategoryRequestDto request, Guid? updatedBy, CancellationToken cancellationToken = default);
+        Task<CategoryResponseDto> UpdateAsync(int id, UpdateCategoryRequestDto request, Guid? updatedBy, bool isAdmin, bool isDeptAdmin, int? callerDepartmentId, CancellationToken cancellationToken = default);
 
-        Task<CategoryResponseDto> DeleteAsync(int id, Guid? deletedBy, CancellationToken cancellationToken = default);
+        Task<CategoryResponseDto> DeleteAsync(int id, Guid? deletedBy, bool isAdmin, bool isDeptAdmin, int? callerDepartmentId, CancellationToken cancellationToken = default);
     }
 }
