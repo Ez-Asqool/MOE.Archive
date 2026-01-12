@@ -62,6 +62,22 @@ namespace MOE.Archive.Api.Controllers
             return Ok(result);
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpGet("main")]
+        public async Task<IActionResult> GetMainCategories(CancellationToken ct)
+        {
+            // UserId
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+                return Unauthorized();
+
+            // Roles
+            var isAdmin = User.IsInRole("Admin");
+
+            var result = await _categoryService.GetMainCategoriesAsync(isAdmin, ct);
+            return Ok(result);
+        }
+
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateCategoryRequestDto request, CancellationToken ct)
         {

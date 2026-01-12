@@ -48,6 +48,9 @@ namespace MOE.Archive.Api.Controllers
             if (string.IsNullOrWhiteSpace(adminIdStr))
                 return Unauthorized();
 
+            if(request.Role == "Admin")
+                return BadRequest("Cannot create another admin user."); 
+
             var adminId = Guid.Parse(adminIdStr);
 
             var result = await _userManagementService.CreateUserByAdminAsync(request, adminId, ct);
@@ -60,6 +63,15 @@ namespace MOE.Archive.Api.Controllers
             var adminIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrWhiteSpace(adminIdStr))
                 return Unauthorized();
+            
+            if (request.Id == Guid.Parse(adminIdStr) && request.Role != "Admin")
+                return BadRequest("Admin users cannot change their own role.");
+
+            if (request.Role == "Admin")
+                return BadRequest("Cannot assign admin role via this endpoint.");
+
+            if(request.IsActive == false && request.Id == Guid.Parse(adminIdStr))
+                return BadRequest("Admin users cannot deactivate themselves."); 
 
             var result = await _userManagementService.UpdateAsync(request, Guid.Parse(adminIdStr), ct);
             return Ok(result);
@@ -71,6 +83,9 @@ namespace MOE.Archive.Api.Controllers
             var adminIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrWhiteSpace(adminIdStr))
                 return Unauthorized();
+
+            if (id == Guid.Parse(adminIdStr))
+                return BadRequest("Admin users cannot delete themselves.");
 
             var result = await _userManagementService.DeleteAsync(id, Guid.Parse(adminIdStr), ct);
             return Ok(result);

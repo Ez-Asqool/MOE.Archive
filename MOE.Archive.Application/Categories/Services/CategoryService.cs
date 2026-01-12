@@ -121,51 +121,6 @@ namespace MOE.Archive.Application.Categories.Services
             return _mapper.Map<CategoryResponseDto>(entity);
         }
 
-        //public async Task<CategoryResponseDto> CreateAsync(CreateCategoryRequestDto request, Guid? createdBy, bool isAdmin, int? callerDepartmentId, bool isDeptAdmin, CancellationToken cancellationToken = default)
-        //{
-        //    if (createdBy == null)
-        //        throw new UnauthorizedAccessException("يجب تسجيل الدخول لتنفيذ هذه العملية.");
-
-        //    var departmentId = request.DepartmentId;
-        //    if (isAdmin)
-        //    {
-        //        departmentId = null;
-        //    }
-        //    else if (isDeptAdmin)
-        //    {
-
-
-        //    }
-        //    else
-        //    {
-        //        throw new UnauthorizedAccessException("ليس لديك الصلاحية لإنشاء تصنيف جديد.");
-        //    }
-
-        //    //check if parent category exists if parentCategoryId is provided
-        //    var parentCategoryId = request.ParentCategoryId;
-        //    if (parentCategoryId.HasValue)
-        //    {
-        //        var parentCategory = await _categoryRepository.GetByIdAsync(parentCategoryId.Value, cancellationToken);
-        //        if (parentCategory == null)
-        //        {
-        //            throw new KeyNotFoundException("التصنيف الأب غير موجود.");
-        //        }
-        //    }
-        //    // mapping request dto to category entity
-        //    var categoryEntity = _mapper.Map<Domain.Entities.Category>(request);    
-        //    categoryEntity.CreatedBy = createdBy;
-
-
-        //    // saving category entity to database
-        //    await _categoryRepository.AddAsync(categoryEntity, cancellationToken);
-        //    await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        //    //returning mapped response dto
-        //    var categoryResponseDto = _mapper.Map<CategoryResponseDto>(categoryEntity); 
-        //    return categoryResponseDto;
-        //}
-
-
 
         public async Task<List<CategoryResponseDto>> GetAllAsync(
                     bool isAdmin,
@@ -226,29 +181,6 @@ namespace MOE.Archive.Application.Categories.Services
             return roots;
         }
 
-        //public async Task<IEnumerable<CategoryResponseDto>> GetAllAsync(int departmentId, CancellationToken cancellationToken = default)
-        //{
-        //    //get all category entities from database
-        //    var categoryEntities = await _categoryRepository.GetAllAsync(cancellationToken);
-
-        //    //map the entities to response dtos and return them
-        //    var categoryResponseDtos = _mapper.Map<IEnumerable<CategoryResponseDto>>(categoryEntities); 
-        //    return categoryResponseDtos;
-        //}
-
-        //public async Task<CategoryResponseDto> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-        //{
-        //    //get the category entity from database
-        //    var categoryEntity = await _categoryRepository.GetByIdAsync(id, cancellationToken);
-        //    if(categoryEntity == null)
-        //    {
-        //        throw new KeyNotFoundException("التصنيف غير موجود.");
-        //    }
-
-        //    //return the mapped response dto
-        //    var categoryResponseDto = _mapper.Map<CategoryResponseDto>(categoryEntity);
-        //    return categoryResponseDto;
-        //}
 
         public async Task<CategoryResponseDto> GetByIdAsync(
                     int id,
@@ -362,40 +294,6 @@ namespace MOE.Archive.Application.Categories.Services
             return _mapper.Map<CategoryResponseDto>(categoryEntity);
         }
 
-        //public async Task<CategoryResponseDto> UpdateAsync(int id, UpdateCategoryRequestDto request, Guid? updatedBy, CancellationToken cancellationToken = default)
-        //{
-        //    //check if parent category exists if parentCategoryId is provided
-        //    var parentCategoryId = request.ParentCategoryId;
-        //    if (parentCategoryId.HasValue)
-        //    {
-        //        var parentCategory = await _categoryRepository.GetByIdAsync(parentCategoryId.Value, cancellationToken);
-        //        if (parentCategory == null)
-        //        {
-        //            throw new KeyNotFoundException("التصنيف الأب غير موجود.");
-        //        }
-        //    }
-
-        //    //get the category entity from database
-        //    var categoryEntity = await _categoryRepository.GetByIdAsync(id, cancellationToken);
-        //    if(categoryEntity == null)
-        //    {
-        //        throw new KeyNotFoundException("التصنيف غير موجود.");
-        //    }
-
-        //    //update the entity properties from request dto
-        //    _mapper.Map(request, categoryEntity);
-        //    categoryEntity.UpdatedBy = updatedBy;
-        //    categoryEntity.UpdatedAt = DateTime.UtcNow;
-
-        //    //save the changes to database
-        //    await _categoryRepository.UpdateAsync(categoryEntity, cancellationToken);
-        //    await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        //    //return the mapped response dto
-        //    var categoryResponseDto = _mapper.Map<CategoryResponseDto>(categoryEntity);
-        //    return categoryResponseDto;
-        //}
-
 
         public async Task<CategoryResponseDto> DeleteAsync(
             int id,
@@ -452,24 +350,16 @@ namespace MOE.Archive.Application.Categories.Services
             return _mapper.Map<CategoryResponseDto>(categoryEntity);
         }
 
-        //public async Task<CategoryResponseDto> DeleteAsync(int id, Guid? deletedBy, CancellationToken cancellationToken = default)
-        //{
-        //    //get the category entity from database 
-        //    var categoryEntity = await _categoryRepository.GetByIdAsync(id, cancellationToken);
-        //    if (categoryEntity == null)
-        //    {
-        //        throw new KeyNotFoundException("التصنيف غير موجود.");
-        //    }
 
-        //    //soft delete the entity
-        //    categoryEntity.UpdatedBy = deletedBy;
-        //    await _categoryRepository.DeleteAsync(categoryEntity, cancellationToken);
-        //    await _unitOfWork.SaveChangesAsync(cancellationToken);
+        public async Task<List<CategoryResponseDto>> GetMainCategoriesAsync(bool isAdmin, CancellationToken ct = default)
+        {
+            if (!isAdmin)
+                throw new UnauthorizedAccessException("ليس لديك صلاحية للوصول إلى التصنيفات الرئيسية.");
 
-        //    //return the mapped response dto
-        //    var categoryResponseDto = _mapper.Map<CategoryResponseDto>(categoryEntity);
-        //    return categoryResponseDto;
+            var mainCategories = await _categoryRepository.FindAsync(c => c.ParentCategoryId == null && c.DepartmentId == null);
+            var categoryResponseDtos = _mapper.Map<IEnumerable<CategoryResponseDto>>(mainCategories);
 
-        //}
+            return categoryResponseDtos.ToList();   
+        }
     }
 }
