@@ -42,6 +42,7 @@ namespace MOE.Archive.Infrastructure.Auth
                 new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
                 new Claim("fullName", user.FullName ?? string.Empty),
                 new Claim("jobNumber", user.JobNumber ?? string.Empty),
+                new Claim("DepartmentId", user.DepartmentId.ToString()),
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.UserName ?? string.Empty)
             };

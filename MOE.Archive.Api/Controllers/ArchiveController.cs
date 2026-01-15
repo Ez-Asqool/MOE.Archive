@@ -30,7 +30,7 @@ namespace MOE.Archive.Api.Controllers
             if (deptClaim != null && int.TryParse(deptClaim.Value, out var depId))
                 callerDeptId = depId;
 
-            // Optional: if non-admin tries to pass departmentId, reject (more secure)
+            // Optional: if non-admin tries to pass departmentId, reject (more secure) 
             if (!isAdmin && departmentId.HasValue)
                 return Forbid();
 
