@@ -9,7 +9,7 @@ namespace MOE.Archive.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,DeptAdmin")]
     public class UsersController : ControllerBase
     {
         private readonly IUserManagementService _userManagementService;
@@ -19,7 +19,9 @@ namespace MOE.Archive.Api.Controllers
             _userManagementService = userManagementService;
         }
 
+
         [HttpGet("{id:guid}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
         {
             var adminIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -30,7 +32,8 @@ namespace MOE.Archive.Api.Controllers
             return Ok(result);
         }
 
-        [HttpGet]
+        [HttpGet("all")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll(CancellationToken ct)
         {
             var adminIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -41,7 +44,12 @@ namespace MOE.Archive.Api.Controllers
             return Ok(result);
         }
 
+        [HttpGet]
+        [HttpGet]
+        [Authorize(Roles = "DeptAdmin")]
+
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] AdminCreateUserRequestDto request, CancellationToken ct)
         {
             var adminIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -58,6 +66,7 @@ namespace MOE.Archive.Api.Controllers
         }
 
         [HttpPut]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update([FromBody] UpdateUserRequestDto request, CancellationToken ct)
         {
             var adminIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -78,6 +87,7 @@ namespace MOE.Archive.Api.Controllers
         }
 
         [HttpDelete("{id:guid}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
         {
             var adminIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -91,6 +101,18 @@ namespace MOE.Archive.Api.Controllers
             return Ok(result);
         }
 
-        
+        [HttpGet("my-department")]
+        [Authorize(Roles = "DeptAdmin")]
+        public async Task<IActionResult> GetMyDepartmentUsers(CancellationToken ct)
+        {
+            // DepartmentId from JWT
+            var deptClaim = User.FindFirstValue("DepartmentId");
+            if (!int.TryParse(deptClaim, out var departmentId) || departmentId <= 0)
+                return Unauthorized(new { message = "لا يمكن تحديد قسم المستخدم." });
+
+            var result = await _userManagementService.GetMyDepartmentUsersAsync(departmentId, ct);
+            return Ok(result);
+        }
+
     }
 }

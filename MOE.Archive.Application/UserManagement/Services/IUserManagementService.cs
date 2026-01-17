@@ -19,6 +19,8 @@ namespace MOE.Archive.Application.UserManagement.Services
 
         Task<List<DepartmentUsersGroupDto>> GetAllGroupedByDepartmentAsync(CancellationToken ct = default);
 
+        Task<List<UserResponseDto>> GetMyDepartmentUsersAsync(int departmentId, CancellationToken ct = default);
+
 
     }
 }

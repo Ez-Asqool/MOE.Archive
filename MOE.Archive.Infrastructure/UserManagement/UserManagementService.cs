@@ -385,6 +385,69 @@ namespace MOE.Archive.Infrastructure.UserManagement
 
             return grouped;
         }
+
+
+        public async Task<List<UserResponseDto>> GetMyDepartmentUsersAsync(int departmentId, CancellationToken ct = default)
+        {
+            // Optional: ensure department exists
+            var dept = await _departmentRepository.GetByIdAsync(departmentId, ct);
+            if (dept == null)
+                throw new KeyNotFoundException("القسم غير موجود.");
+
+            // 1) Get users of that department (soft delete filter applies if configured)
+            var users = await _userManager.Users
+                .AsNoTracking()
+                .Where(u => u.DepartmentId == departmentId)
+                .Select(u => new
+                {
+                    u.Id,
+                    u.FullName,
+                    u.Email,
+                    u.PhoneNumber,
+                    u.JobNumber,
+                    u.DepartmentId,
+                    u.IsActive
+                })
+                .ToListAsync(ct);
+
+            if (users.Count == 0)
+                return new List<UserResponseDto>();
+
+            var userIds = users.Select(u => u.Id).ToList();
+
+            // 2) Load roles in ONE query (fast)
+            var roles = await (
+                from ur in _context.UserRoles.AsNoTracking()
+                join r in _context.Roles.AsNoTracking() on ur.RoleId equals r.Id
+                where userIds.Contains(ur.UserId)
+                select new { ur.UserId, RoleName = r.Name }
+            ).ToListAsync(ct);
+
+            // If a user has multiple roles, take the first
+            var roleByUserId = roles
+                .GroupBy(x => x.UserId)
+                .ToDictionary(g => g.Key, g => g.Select(x => x.RoleName).FirstOrDefault() ?? string.Empty);
+
+            // 3) Map to response
+            var result = users
+                .Select(u => new UserResponseDto
+                {
+                    Id = u.Id,
+                    FullName = u.FullName,
+                    Email = u.Email ?? string.Empty,
+                    PhoneNumber = u.PhoneNumber,
+                    JobNumber = u.JobNumber,
+                    DepartmentId = u.DepartmentId,
+                    IsActive = u.IsActive,
+                    Role = roleByUserId.TryGetValue(u.Id, out var role) ? role : string.Empty
+                })
+                .OrderBy(x => x.Role == "DeptAdmin" ? 0 : 1) // show DeptAdmin first (optional)
+                .ThenBy(x => x.FullName)
+                .ToList();
+
+            return result;
+        }
+
     }
     
 }
