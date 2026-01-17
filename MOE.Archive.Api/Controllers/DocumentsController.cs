@@ -53,6 +53,26 @@ namespace MOE.Archive.Api.Controllers
         //    return Ok(result);
         //}
 
+        [HttpPut("{id:guid}")]
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateDocumentRequestDto request, CancellationToken ct)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId))
+                return Unauthorized();
+
+            var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
+
+            // If you have DepartmentId in JWT claims (recommended):
+            int? deptId = null;
+            var deptClaim = User.FindFirstValue("DepartmentId");
+            if (int.TryParse(deptClaim, out var parsedDept))
+                deptId = parsedDept;
+
+            var result = await _documentService.UpdateAsync(id, request, userId, role, deptId, ct);
+            return Ok(result);
+        }
+
+
         private Guid? GetUserId()
         {
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);

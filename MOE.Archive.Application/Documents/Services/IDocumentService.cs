@@ -13,5 +13,13 @@ namespace MOE.Archive.Application.Documents.Services
         //Task<DocumentResponseDto> UploadAsync(UploadDocumentRequestDto request, Guid? currentUserId, CancellationToken ct = default);
 
         Task<DocumentResponseDto> UploadAsync(UploadDocumentRequestDto request,Guid? currentUserId,bool isAdmin,int? callerDepartmentId,CancellationToken ct = default);
+
+        Task<DocumentResponseDto> UpdateAsync(
+        Guid documentId,
+        UpdateDocumentRequestDto request,
+        Guid? currentUserId,
+        string currentRole,
+        int? currentDepartmentId,
+        CancellationToken ct = default);
     }
 }

@@ -201,5 +201,67 @@ namespace MOE.Archive.Application.Documents.Services
         //        return response;
         //    }
         //}
+
+        public async Task<DocumentResponseDto> UpdateAsync(
+        Guid documentId,
+        UpdateDocumentRequestDto request,
+        Guid? currentUserId,
+        string currentRole,
+        int? currentDepartmentId,
+        CancellationToken ct = default)
+        {
+            if (currentUserId is null)
+                throw new UnauthorizedAccessException("غير مصرح.");
+
+            // 1) Load document
+            var doc = await _documentRepository.GetByIdAsync(documentId, ct);
+            if (doc == null)
+                throw new KeyNotFoundException("الملف غير موجود.");
+
+            // 2) Permission: non-admin must be same department
+            var isAdmin = currentRole == "Admin";
+            if (!isAdmin)
+            {
+                if (!currentDepartmentId.HasValue)
+                    throw new UnauthorizedAccessException("غير مصرح.");
+
+                if (doc.DepartmentId != currentDepartmentId.Value)
+                    throw new UnauthorizedAccessException("غير مصرح لك بتعديل ملفات قسم آخر.");
+            }
+
+            // 3) Update OriginalName (if provided)
+            if (!string.IsNullOrWhiteSpace(request.OriginalName))
+            {
+                doc.OriginalName = request.OriginalName.Trim();
+            }
+
+            // 4) Update CategoryId (if provided)
+            if (request.CategoryId.HasValue)
+            {
+                var newCategory = await _categoryRepository.GetByIdAsync(request.CategoryId.Value, ct);
+                if (newCategory == null)
+                    throw new KeyNotFoundException("التصنيف غير موجود.");
+
+                // Non-admin: ensure category is allowed for their department
+                //if (!isAdmin)
+                //{
+                    // Allowed: global main category (DepartmentId null) OR dept category matching user's dept
+                    if (newCategory.DepartmentId != null && newCategory.DepartmentId != currentDepartmentId)
+                        throw new UnauthorizedAccessException("لا يمكنك اختيار تصنيف تابع لقسم آخر.");
+                //}
+
+                doc.CategoryId = request.CategoryId.Value;
+            }
+
+            // 5) Audit fields
+            doc.UpdatedAt = DateTime.UtcNow;
+            doc.UpdatedBy = currentUserId;
+
+            // 6) Save
+            await _documentRepository.UpdateAsync(doc, ct);
+            await _unitOfWork.SaveChangesAsync(ct);
+
+            return _mapper.Map<DocumentResponseDto>(doc);
+        }
     }
 }
