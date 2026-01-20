@@ -48,9 +48,9 @@ namespace MOE.Archive.Infrastructure.Storage
             Directory.CreateDirectory(absoluteFolder);
 
             // GUID filename + extension
-            var ext = Path.GetExtension(originalFileName);
-            var safeExt = string.IsNullOrWhiteSpace(ext) ? "" : ext;
-            var savedFileName = $"{documentId}{safeExt}";
+            //var ext = Path.GetExtension(originalFileName);
+            //var safeExt = string.IsNullOrWhiteSpace(ext) ? "" : ext;
+            var savedFileName = $"{documentId}{originalFileName}";
 
             var absolutePath = Path.Combine(absoluteFolder, savedFileName);
 

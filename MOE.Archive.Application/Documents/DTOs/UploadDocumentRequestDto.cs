@@ -11,6 +11,8 @@ namespace MOE.Archive.Application.Documents.DTOs
     {
         public int CategoryId { get; set; }
         public int DepartmentId { get; set; }
-        public IFormFile File { get; set; } = default!;
+
+        // ✅ multiple files
+        public List<IFormFile> Files { get; set; } = new();
     }
 }

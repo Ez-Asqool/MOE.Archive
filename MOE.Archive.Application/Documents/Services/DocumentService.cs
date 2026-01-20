@@ -33,6 +33,122 @@ namespace MOE.Archive.Application.Documents.Services
         }
 
 
+        public async Task<List<DocumentResponseDto>> UploadAsync(
+            UploadDocumentRequestDto request,
+            Guid? currentUserId,
+            bool isAdmin,
+            int? callerDepartmentId,
+            CancellationToken ct = default)
+        {
+            // 0) Auth
+            if (currentUserId is null)
+                throw new UnauthorizedAccessException("المستخدم غير مصرح له رفع الملفات.");
+
+            // 1) Files validation
+            if (request.Files == null || request.Files.Count == 0)
+                throw new InvalidOperationException("الملفات مطلوبة.");
+
+            if (request.Files.Count > 10)
+                throw new InvalidOperationException("يمكن رفع 10 ملفات كحد أقصى في الطلب الواحد.");
+
+            // 2) Non-admin must upload only to his department
+            if (!isAdmin)
+            {
+                if (!callerDepartmentId.HasValue)
+                    throw new UnauthorizedAccessException("لا يمكن تحديد قسم المستخدم.");
+
+                if (request.DepartmentId != callerDepartmentId.Value)
+                    throw new UnauthorizedAccessException("لا يمكنك رفع ملف لقسم آخر.");
+            }
+
+            // 3) Validate Department exists
+            var dept = await _departmentRepository.GetByIdAsync(request.DepartmentId, ct);
+            if (dept == null)
+                throw new KeyNotFoundException("القسم غير موجود.");
+
+            // 4) Validate Category exists
+            var category = await _categoryRepository.GetByIdAsync(request.CategoryId, ct);
+            if (category == null)
+                throw new KeyNotFoundException("الرجاء إدخال تصنيف موجود.");
+
+            // 5) Category rules
+            // Admin:
+            //  - allowed global category
+            //  - allowed dept category only if it matches requested dept
+            // Non-admin:
+            //  - allowed global category
+            //  - allowed dept category only if it matches user dept
+            if (isAdmin)
+            {
+                if (category.DepartmentId.HasValue && category.DepartmentId.Value != request.DepartmentId)
+                    throw new UnauthorizedAccessException("التصنيف لا يتبع نفس القسم المحدد.");
+            }
+            else
+            {
+                var userDeptId = callerDepartmentId!.Value;
+
+                if (category.DepartmentId.HasValue && category.DepartmentId.Value != userDeptId)
+                    throw new UnauthorizedAccessException("لا يمكنك رفع الملفات تحت تصنيفات قسم آخر.");
+            }
+
+            // 6) Upload each file
+            var results = new List<DocumentResponseDto>();
+
+            foreach (var file in request.Files)
+            {
+                if (file == null || file.Length == 0)
+                {
+                    var fileName = file?.FileName ?? "غير معروف";
+                    throw new InvalidOperationException($"الملف '{fileName}' فارغ أو غير صالح.");
+                }
+
+                var originalName = file.FileName;
+                var mimeType = string.IsNullOrWhiteSpace(file.ContentType)
+                    ? "application/octet-stream"
+                    : file.ContentType;
+
+                var fileSize = file.Length;
+
+                var doc = new Document
+                {
+                    Id = Guid.NewGuid(),
+                    OriginalName = originalName,
+                    MimeType = mimeType,
+                    FileSize = fileSize,
+                    DepartmentId = request.DepartmentId,
+                    CategoryId = request.CategoryId,
+                    OcrStatus = OcrStatus.Pending,
+                    IndexStatus = IndexStatus.Pending,
+                    IsDeleted = false,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = currentUserId.Value
+                };
+
+                // Save file to storage
+                await using var stream = file.OpenReadStream();
+                var (relativePath, savedFileName) = await _fileStorage.SaveAsync(
+                    stream,
+                    originalName,
+                    request.DepartmentId,
+                    request.CategoryId,
+                    doc.Id,
+                    ct);
+
+                doc.FileName = savedFileName;
+                doc.FilePath = relativePath;
+
+                await _documentRepository.AddAsync(doc, ct);
+
+                results.Add(_mapper.Map<DocumentResponseDto>(doc));
+            }
+
+            // 7) Save DB once (faster)
+            await _unitOfWork.SaveChangesAsync(ct);
+
+            return results;
+        }
+
+        /*
         public async Task<DocumentResponseDto> UploadAsync(
                 UploadDocumentRequestDto request,
                 Guid? currentUserId,
@@ -130,7 +246,7 @@ namespace MOE.Archive.Application.Documents.Services
 
             // 10) Return response
             return _mapper.Map<DocumentResponseDto>(doc);
-        }
+        }*/
 
         //    public async Task<DocumentResponseDto> UploadAsync(
         //        UploadDocumentRequestDto request,
@@ -259,6 +375,42 @@ namespace MOE.Archive.Application.Documents.Services
 
             // 6) Save
             await _documentRepository.UpdateAsync(doc, ct);
+            await _unitOfWork.SaveChangesAsync(ct);
+
+            return _mapper.Map<DocumentResponseDto>(doc);
+        }
+
+
+        public async Task<DocumentResponseDto> DeleteAsync(
+            Guid documentId,
+            Guid? currentUserId,
+            bool isAdmin,
+            int? callerDepartmentId,
+            CancellationToken ct = default)
+        {
+            if (currentUserId is null)
+                throw new UnauthorizedAccessException("غير مصرح.");
+
+            // Load document
+            var doc = await _documentRepository.GetByIdAsync(documentId, ct);
+            if (doc == null)
+                throw new KeyNotFoundException("الملف غير موجود.");
+
+            // Permission: non-admin must be same department
+            if (!isAdmin)
+            {
+                if (!callerDepartmentId.HasValue)
+                    throw new UnauthorizedAccessException("لا يمكن تحديد قسم المستخدم.");
+
+                if (doc.DepartmentId != callerDepartmentId.Value)
+                    throw new UnauthorizedAccessException("لا يمكنك حذف ملف تابع لقسم آخر.");
+            }
+
+            // Soft delete
+            doc.UpdatedAt = DateTime.UtcNow;
+            doc.UpdatedBy = currentUserId;
+
+            await _documentRepository.DeleteAsync(doc, ct);
             await _unitOfWork.SaveChangesAsync(ct);
 
             return _mapper.Map<DocumentResponseDto>(doc);

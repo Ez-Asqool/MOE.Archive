@@ -18,6 +18,31 @@ namespace MOE.Archive.Api.Controllers
         {
             _documentService = documentService;
         }
+        /*
+        [HttpPost("upload")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> Upload([FromForm] UploadDocumentRequestDto request, CancellationToken ct)
+        {
+            // UserId
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+                return Unauthorized();
+
+            var userId = Guid.Parse(userIdClaim.Value);
+
+            // Role
+            var isAdmin = User.IsInRole("Admin");
+
+            // DepartmentId from JWT claim (for Employee/DeptAdmin)
+            int? callerDeptId = null;
+            var deptClaim = User.FindFirst("DepartmentId");
+            if (deptClaim != null && int.TryParse(deptClaim.Value, out var depId))
+                callerDeptId = depId;
+
+            var result = await _documentService.UploadAsync(request, userId, isAdmin, callerDeptId, ct);
+            return Ok(result);
+        }
+        */
 
         [HttpPost("upload")]
         [Consumes("multipart/form-data")]
@@ -38,6 +63,13 @@ namespace MOE.Archive.Api.Controllers
             var deptClaim = User.FindFirst("DepartmentId");
             if (deptClaim != null && int.TryParse(deptClaim.Value, out var depId))
                 callerDeptId = depId;
+
+            // ✅ Validate max files count (controller-level)
+            if (request.Files == null || request.Files.Count == 0)
+                return BadRequest(new { message = "الملفات مطلوبة." });
+                    
+            if (request.Files.Count > 10)
+                return BadRequest(new { message = "يمكن رفع 10 ملفات كحد أقصى في الطلب الواحد." });
 
             var result = await _documentService.UploadAsync(request, userId, isAdmin, callerDeptId, ct);
             return Ok(result);
@@ -73,10 +105,29 @@ namespace MOE.Archive.Api.Controllers
         }
 
 
-        private Guid? GetUserId()
+        [HttpDelete("{id:guid}")]
+        public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
         {
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            return Guid.TryParse(userIdStr, out var id) ? id : null;
+            // UserId
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+                return Unauthorized();
+
+            var userId = Guid.Parse(userIdClaim.Value);
+
+            // Role
+            var isAdmin = User.IsInRole("Admin");
+
+            // DepartmentId from JWT claim (for Employee/DeptAdmin)
+            int? callerDeptId = null;
+            var deptClaim = User.FindFirst("DepartmentId");
+            if (deptClaim != null && int.TryParse(deptClaim.Value, out var depId))
+                callerDeptId = depId;
+
+            var result = await _documentService.DeleteAsync(id, userId, isAdmin, callerDeptId, ct);
+            return Ok(result);
         }
+
+        
     }
 }
