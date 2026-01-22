@@ -20,6 +20,24 @@ namespace MOE.Archive.Api.Controllers
         }
 
 
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Create([FromBody] AdminCreateUserRequestDto request, CancellationToken ct)
+        {
+            var adminIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(adminIdStr))
+                return Unauthorized();
+
+            if (request.Role == "Admin")
+                return BadRequest("Cannot create another admin user.");
+
+            var adminId = Guid.Parse(adminIdStr);
+
+            var result = await _userManagementService.CreateUserByAdminAsync(request, adminId, ct);
+            return Ok(result);
+        }
+
+
         [HttpGet("{id:guid}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
@@ -44,26 +62,9 @@ namespace MOE.Archive.Api.Controllers
             return Ok(result);
         }
 
-        [HttpGet]
-        [HttpGet]
-        [Authorize(Roles = "DeptAdmin")]
+       
 
-        [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create([FromBody] AdminCreateUserRequestDto request, CancellationToken ct)
-        {
-            var adminIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrWhiteSpace(adminIdStr))
-                return Unauthorized();
-
-            if(request.Role == "Admin")
-                return BadRequest("Cannot create another admin user."); 
-
-            var adminId = Guid.Parse(adminIdStr);
-
-            var result = await _userManagementService.CreateUserByAdminAsync(request, adminId, ct);
-            return Ok(result);
-        }
+        
 
         [HttpPut]
         [Authorize(Roles = "Admin")]
