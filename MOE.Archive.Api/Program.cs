@@ -16,10 +16,26 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+// Add Swagger services
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 //This line wires DbContext + Identity + repositories from Infrastructure
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddApplicationLayer(builder.Configuration);
+
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "http://localhost:3000", "http://localhost:5174") // Vite default ports
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+});
 
 // 2) JWT Authentication
 var jwtSection = builder.Configuration.GetSection("Jwt");
@@ -59,11 +75,6 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy("EmployeeOrAdmin", policy =>
         policy.RequireRole("Employee", "Admin"));
-
-    options.AddPolicy("AdminOrDeptAdmin", policy =>
-        policy.RequireRole("Admin", "DeptAdmin"));
-
-    
 });
 
 var app = builder.Build();
@@ -81,10 +92,19 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "MOE Archive API v1");
+        options.RoutePrefix = "swagger";
+    });
 }
 
-app.UseStaticFiles();
 app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+// Enable CORS (must be before Authentication/Authorization)
+app.UseCors("AllowFrontend");
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
